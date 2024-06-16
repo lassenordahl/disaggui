@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package obs;
+
+// Specify the Go package path
+option go_package = "github.com/lassenordahl/disaggui/obs/proto";
+
+service CRDBService {
+  rpc ProcessFingerprint (Fingerprint) returns (Ack);
+}
+
+message Fingerprint {
+  string input = 1;
+}
+
+message Ack {
+  string message = 1;
+}
