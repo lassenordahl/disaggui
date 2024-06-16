@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"fmt"
+	"time"
 
 	_ "github.com/mattn/go-sqlite3"
 )
@@ -98,4 +99,46 @@ func queryFingerprints(db *sql.DB, page, limit int) (FingerprintPage, error) {
 		CurrentPage:  page,
 		TotalPages:   totalPages,
 	}, nil
+}
+
+type IntervalCount struct {
+	Timestamp string `json:"timestamp"`
+	Count     int    `json:"count"`
+}
+
+func getIntervalCounts(db *sql.DB) ([]IntervalCount, error) {
+	rows, err := db.Query("SELECT timestamp FROM fingerprints ORDER BY timestamp ASC")
+	if err != nil {
+		return nil, fmt.Errorf("failed to query timestamps: %v", err)
+	}
+	defer rows.Close()
+
+	var counts []IntervalCount
+	var timestamp string
+	for rows.Next() {
+		err := rows.Scan(&timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to scan timestamp: %v", err)
+		}
+
+		t, err := time.Parse(time.RFC3339, timestamp)
+		if err != nil {
+			return nil, fmt.Errorf("failed to parse timestamp: %v", err)
+		}
+
+		intervalKey := t.Truncate(30 * time.Second).Format("2006-01-02 15:04:05")
+		found := false
+		for i, count := range counts {
+			if count.Timestamp == intervalKey {
+				counts[i].Count++
+				found = true
+				break
+			}
+		}
+		if !found {
+			counts = append(counts, IntervalCount{Timestamp: intervalKey, Count: 1})
+		}
+	}
+
+	return counts, nil
 }

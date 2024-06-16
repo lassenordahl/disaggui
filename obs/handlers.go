@@ -27,3 +27,15 @@ func (s *server) listFingerprints(w http.ResponseWriter, r *http.Request) {
 	}
 	json.NewEncoder(w).Encode(fingerprintPage)
 }
+
+func (s *server) listFingerprintCounts(w http.ResponseWriter, r *http.Request) {
+	counts, err := getIntervalCounts(s.db)
+	if err != nil {
+		println(err.Error())
+		http.Error(w, "Failed to count statements", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(counts)
+}

@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 	pb "github.com/lassenordahl/disaggui/obs/proto"
 	"github.com/lassenordahl/disaggui/obs/uihandler"
+	"github.com/rs/cors"
 	"google.golang.org/grpc"
 )
 
@@ -54,16 +55,26 @@ func main() {
 		}
 	}()
 
-
 	s := &server{db: db}
 	r := mux.NewRouter()
+
+	// Add CORS middleware
+	c := cors.New(cors.Options{
+		AllowedOrigins: []string{"*"}, // Allow all origins
+		AllowedMethods: []string{"GET", "POST", "PUT", "DELETE"},
+		AllowedHeaders: []string{"Content-Type", "Authorization"},
+	})
+
 	apiRouter := r.PathPrefix("/api").Subrouter()
 	apiRouter.HandleFunc("/fingerprints", s.listFingerprints).Methods("GET")
+	apiRouter.HandleFunc("/fingerprints/count", s.listFingerprintCounts).Methods("GET")
 	apiRouter.HandleFunc("/health", s.health).Methods("GET")
 
 	// Serve the latest UI bundle
 	uihandler.Serve("v1.0", r)
 
+	handler := c.Handler(r)
+
 	log.Println("HTTP server is running on port :8080")
-	log.Fatal(http.ListenAndServe(":8080", r))
+	log.Fatal(http.ListenAndServe(":8080", handler))
 }

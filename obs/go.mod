@@ -4,7 +4,10 @@ go 1.22
 
 require google.golang.org/grpc v1.64.0
 
-require github.com/gorilla/mux v1.8.1 // indirect
+require (
+	github.com/gorilla/mux v1.8.1 // indirect
+	github.com/rs/cors v1.11.0 // indirect
+)
 
 require (
 	github.com/mattn/go-sqlite3 v1.14.22
