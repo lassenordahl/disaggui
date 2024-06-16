@@ -1,7 +1,7 @@
 PROTO_DIR=proto
 GEN_DIR=gen/go
 
-.PHONY: all proto crdb obs clean format
+.PHONY: all proto crdb obs bucket clean format
 
 all: proto crdb obs
 
@@ -17,13 +17,22 @@ obs: proto
 	@echo "🔨 Building OBS..."
 	cd OBS && go build -o ../bin/obs
 
+bucket:
+	@echo "🔨 Building Bucket..."
+	cd bucket && go build -o ../bin/bucket main.go
+
 run-crdb: crdb
 	@echo "🏃‍♂️ Running CRDB..."
 	./bin/crdb
 
 run-obs: obs
-	@echo "🏃‍♂️ Running OBS..."
+	@echo "🍕 Starting OBS DB and Server..."
 	./bin/obs
+
+run-bucket: bucket
+	@echo "🏃‍♂️ Running Bucket..."
+	chmod +x ./bin/bucket
+	./bin/bucket
 
 clean:
 	@echo "🧹 Cleaning up..."

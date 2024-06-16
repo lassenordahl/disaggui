@@ -11,6 +11,7 @@ service CRDBService {
 
 message Fingerprint {
   string input = 1;
+  string timestamp = 2;
 }
 
 message Ack {
