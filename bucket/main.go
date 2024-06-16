@@ -5,22 +5,10 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
-
-// GenerateFakeBundle creates a fake index.html file for a given version
-func generateFakeBundle(version string) error {
-	dir := filepath.Join("bundles", version)
-	if err := os.MkdirAll(dir, os.ModePerm); err != nil {
-		return err
-	}
-
-	filePath := filepath.Join(dir, "index.html")
-	content := fmt.Sprintf("<html><body><h1>Version %s</h1></body></html>", version)
-	return os.WriteFile(filePath, []byte(content), 0644)
-}
 
 // ListFiles lists all the versions in the bundles directory
 func listFiles() []string {
@@ -31,9 +19,15 @@ func listFiles() []string {
 
 	var versions []string
 	for _, file := range files {
-		if file.IsDir() {
-			versions = append(versions, file.Name())
+		// Remove the `.zip` suffix from the filename.
+		version := strings.TrimSuffix(file.Name(), ".zip")
+
+		// Don't add `.DS_Store` to the list of versions.
+		if version == ".DS_Store" {
+			continue
 		}
+
+		versions = append(versions, version)
 	}
 	return versions
 }
@@ -46,29 +40,17 @@ func handleVersionsList(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// HandleBundle serves versioned bundles from a local directory
+// HandleBundle serves serves the `{version}.zip` bundle from the `bundles` directory.
+// Users can download the full bundled zip from this file.
 func handleBundle(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	version := vars["version"]
-	filePath := filepath.Join("bundles", version, "index.html")
+	file := fmt.Sprintf("bundles/%s.zip", version)
 
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		http.NotFound(w, r)
-		return
-	}
-
-	http.ServeFile(w, r, filePath)
+	http.ServeFile(w, r, file)
 }
 
 func main() {
-	// Generate some fake bundles
-	versions := []string{"v1.0.0", "v1.0.1", "v1.1.0", "v1.2.3"}
-	for _, version := range versions {
-		if err := generateFakeBundle(version); err != nil {
-			log.Fatalf("Failed to generate bundle for version %s: %v", version, err)
-		}
-	}
-
 	// Create a new router
 	r := mux.NewRouter()
 

@@ -42,3 +42,18 @@ clean:
 fmt:
 	@echo "🎨 Formatting Go files..."
 	find . -name '*.go' -not -path './gen/*' -exec gofmt -s -w {} +
+
+rev-version: VERSION ?= "1.0.0"
+rev-version:
+	@echo "🔧 Setting version to $(VERSION) in package.json"
+	sed -i '' 's/"version": "[^"]*"/"version": $(VERSION)/' ui/package.json
+	@echo "🔨 Building the React app..."
+	cd ui && npm run build
+	@echo "📦 Copying built files to bundles/v$(VERSION)"
+	mkdir -p bundles/v$(VERSION)
+	cp -r ui/dist/* bundles/v$(VERSION)/
+	@echo "📦 Creating zip archive of the built files"
+	cd bundles && zip -r v$(VERSION).zip v$(VERSION)
+	@echo "📦 Cleaning up..."
+	rm -rf bundles/v$(VERSION)
+

@@ -1,28 +1,51 @@
+import { useState } from "react";
 import {
   QueryClient,
   QueryClientProvider,
   useQuery,
 } from "@tanstack/react-query";
-import { Theme, Spinner, Callout, Table, Text } from "@radix-ui/themes";
+import {
+  Theme,
+  Spinner,
+  Callout,
+  Table,
+  Card,
+  Heading,
+} from "@radix-ui/themes";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
+import { ErrorBoundary } from "react-error-boundary";
+import { Line, LineChart, XAxis, YAxis } from "recharts";
 
 import "@radix-ui/themes/styles.css";
 import "./app.css";
-import { Line, LineChart, XAxis, YAxis } from "recharts";
 
 // Create a client
 const queryClient = new QueryClient();
 
+function ErrorFallback({ error }: { error: Error }) {
+  return (
+    <div>
+      Oh no! Something went wrong:
+      <pre>{error.message}</pre>
+    </div>
+  );
+}
+
 function App() {
   return (
-    // Provide the client to your App
     <QueryClientProvider client={queryClient}>
       <Theme>
-        <Page>
-          <Text size="7">Table</Text>
-          <Fingerprints />
-          <Text size="7">Graph</Text>
-          <FingerprintGraphs />
+        <Page title="Fingerprints">
+          <Card className="card table">
+            <Heading size="6">Fingerprints</Heading>
+            <ErrorBoundary FallbackComponent={ErrorFallback}>
+              <Fingerprints />
+            </ErrorBoundary>
+          </Card>
+          <Card className="card">
+            <Heading size="6">Amount per 30 seconds</Heading>
+            <FingerprintGraphs />
+          </Card>
         </Page>
       </Theme>
     </QueryClientProvider>
@@ -31,12 +54,18 @@ function App() {
 
 const BASE_URL = "http://localhost:8080/api";
 
-const Page = ({ children }: { children: React.ReactNode }) => (
+const Page = ({
+  children,
+  title,
+}: {
+  children: React.ReactNode;
+  title: string;
+}) => (
   <div className="page">
     <div className="header">
-      <Text size="9">Fingerprints</Text>
+      <Heading size="8">{title}</Heading>
     </div>
-    {children}
+    <div className="content">{children}</div>
   </div>
 );
 
@@ -52,6 +81,8 @@ const fetchFingerprints = async () => {
 };
 
 const Fingerprints = () => {
+  const [explode, setExplode] = useState(false);
+
   const { data, isLoading, error } = useQuery({
     queryKey: ["fingerprints"],
     queryFn: fetchFingerprints,
@@ -70,6 +101,10 @@ const Fingerprints = () => {
       </Callout.Root>
     );
 
+  if (explode) {
+    throw new Error("A bug was left in during one of 11 backports!");
+  }
+
   return (
     <Table.Root>
       <Table.Header>
@@ -80,9 +115,11 @@ const Fingerprints = () => {
       </Table.Header>
       <Table.Body>
         {data.fingerprints.map(
-          (fingerprint: { input: string; timestamp: string }, i) => (
+          (fingerprint: { input: string; timestamp: string }, i: number) => (
             <Table.Row key={i}>
-              <Table.Cell>{fingerprint.input}</Table.Cell>
+              <Table.Cell className="explode" onClick={() => setExplode(true)}>
+                {fingerprint.input}
+              </Table.Cell>
               <Table.Cell>{fingerprint.timestamp}</Table.Cell>
             </Table.Row>
           ),
@@ -117,8 +154,6 @@ const FingerprintGraphs = () => {
         </Callout.Text>
       </Callout.Root>
     );
-
-  console.log(data);
 
   // Render a rechart line graph.
   return (
