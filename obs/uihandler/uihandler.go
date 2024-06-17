@@ -169,7 +169,6 @@ func GetLatestVersion(majorRelease string) (string, error) {
 
 	return matchingVersions[len(matchingVersions)-1], nil
 }
-
 // Serve serves the latest bundle for the specified major release version using the provided router
 func Serve(majorRelease string, r *mux.Router) {
 	latestVersion, err := GetLatestVersion(majorRelease)
@@ -193,7 +192,27 @@ func Serve(majorRelease string, r *mux.Router) {
 		assetsHandler.ServeHTTP(w, r)
 	}))
 
-	r.PathPrefix("/").Handler(http.StripPrefix("/", http.FileServer(http.Dir("obsbundle"))))
+	r.PathPrefix("/").Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, err := os.Stat("obsbundle")
+		if os.IsNotExist(err) {
+			log.Println("obsbundle directory does not exist, downloading bundle")
+			err := DownloadBundle(latestVersion)
+			if err != nil {
+				log.Fatalf("Failed to download bundle: %v", err)
+			}
+		}
+
+		fs := http.StripPrefix("/", http.FileServer(http.Dir("obsbundle")))
+		fs.ServeHTTP(w, r)
+		if w.Header().Get("Content-Type") == "" {
+			log.Println("File not found, re-downloading bundle")
+			err := DownloadBundle(latestVersion)
+			if err != nil {
+				log.Fatalf("Failed to download bundle: %v", err)
+			}
+			fs.ServeHTTP(w, r)
+		}
+	}))
 
 	log.Println("UI is being served on port :8080")
 }

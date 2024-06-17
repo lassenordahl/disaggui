@@ -11,10 +11,14 @@ import {
   Table,
   Card,
   Heading,
+  DataList,
+  Badge,
 } from "@radix-ui/themes";
 import { InfoCircledIcon } from "@radix-ui/react-icons";
 import { ErrorBoundary } from "react-error-boundary";
 import { Line, LineChart, XAxis, YAxis } from "recharts";
+
+import packageJson from "../package.json";
 
 import "@radix-ui/themes/styles.css";
 import "./app.css";
@@ -42,10 +46,25 @@ function App() {
               <Fingerprints />
             </ErrorBoundary>
           </Card>
-          <Card className="card">
-            <Heading size="6">Amount per 30 seconds</Heading>
-            <FingerprintGraphs />
-          </Card>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "2rem" }}
+          >
+            <Card className="card">
+              <Heading size="6">Amount per 30 seconds</Heading>
+              <FingerprintGraphs />
+            </Card>
+            <Card className="card">
+              <Heading size="6">Page Details</Heading>
+              <DataList.Root>
+                <DataList.Item>
+                  <DataList.Label>Version:</DataList.Label>
+                  <DataList.Value>
+                    <Badge>{packageJson.version}</Badge>
+                  </DataList.Value>
+                </DataList.Item>
+              </DataList.Root>
+            </Card>
+          </div>
         </Page>
       </Theme>
     </QueryClientProvider>
