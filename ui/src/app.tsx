@@ -136,7 +136,7 @@ const Fingerprints = () => {
         {data.fingerprints.map(
           (fingerprint: { input: string; timestamp: string }, i: number) => (
             <Table.Row key={i}>
-              <Table.Cell className="explode" onClick={() => setExplode(true)}>
+              <Table.Cell className="explode" onClick={() => setExplode(false)}>
                 {fingerprint.input}
               </Table.Cell>
               <Table.Cell>{fingerprint.timestamp}</Table.Cell>

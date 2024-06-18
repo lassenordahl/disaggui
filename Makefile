@@ -43,7 +43,7 @@ fmt:
 	@echo "🎨 Formatting Go files..."
 	find . -name '*.go' -not -path './gen/*' -exec gofmt -s -w {} +
 
-rev-version: VERSION ?= "1.0.1"
+rev-version: VERSION ?= "1.0.3"
 rev-version:
 	@echo "🔧 Setting version to $(VERSION) in package.json"
 	sed -i '' 's/"version": "[^"]*"/"version": $(VERSION)/' ui/package.json
